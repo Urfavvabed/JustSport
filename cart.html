@@ -1,0 +1,229 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cart - Just Sport</title>
+    
+    <link rel="icon" href="https://i.ibb.co/r0cyvgJ/favicon-32x32.png" type="image/x-icon">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: Arial, sans-serif;
+        }
+        .navbar {
+            margin-bottom: 20px;
+        }
+        #cart-container {
+            margin-bottom: 20px;
+        }
+        .border-bottom {
+            border-bottom: 1px solid #dee2e6;
+        }
+        .btn-danger {
+            margin-top: 10px;
+        }
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 12px 15px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+        input[type="text"]:focus,
+        select:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+        input[type="text"].error {
+            border-color: red;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#">Just Sport</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Products</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Contact</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container mt-5 text-center">
+        <h1>Shopping Cart</h1>
+        <div id="cart-container" class="mt-4"></div>
+        <h3 id="total-price"></h3>
+        <button class="btn btn-primary" data-toggle="modal" data-target="#checkoutModal">Proceed to Checkout</button>
+    </div>
+
+    <!-- Checkout Modal -->
+    <div class="modal fade" id="checkoutModal" tabindex="-1" aria-labelledby="checkoutModalLabel" style="display: none;" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="checkoutModalLabel">Checkout</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="payment-form">
+                        <div class="form-group">
+                            <label for="payment-method">Payment Method</label>
+                            <select id="payment-method" onchange="togglePaymentFields()">
+                                <option value="cod">Cash on Delivery</option>
+                                <option value="credit-card">Credit Card</option>
+                            </select>
+                        </div>
+                        <div id="cod-fields" style="display: none;">
+                            <label for="recipient-name">Recipient Name:</label>
+                            <input id="recipient-name" type="text" placeholder="Enter recipient name">
+                            
+                            <label for="address-cod">Address:</label>
+                            <input id="address-cod" type="text" placeholder="Enter delivery address">
+                            
+                            <label for="number-cod">Phone Number:</label>
+                            <input id="number-cod" type="text" placeholder="Enter phone number">
+                        </div>
+                        
+                        <div id="credit-card-fields" style="display: none;">
+                            <label for="full-name">Full Name:</label>
+                            <input id="full-name" type="text" placeholder="Enter your full name">
+                            
+                            <label for="address-credit">Address:</label>
+                            <input id="address-credit" type="text" placeholder="Enter billing address">
+                            
+                            <label for="credit-phone-number">Phone Number:</label>
+                            <input id="credit-phone-number" type="text" placeholder="Enter phone number">
+                            
+                            <label for="card-number">Card Number:</label>
+                            <input id="card-number" type="text" placeholder="Enter card number">
+                            
+                            <label for="expiry-date">Expiry Date:</label>
+                            <input id="expiry-date" type="text" placeholder="MM/YY">
+                            
+                            <label for="cvc">CVC:</label>
+                            <input id="cvc" type="text" placeholder="CVC">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary" form="payment-form">Place Order</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.min.js"></script>
+    <script>
+      // === Client-side Cart and Checkout Logic ===
+function loadCart() {
+    const cart = JSON.parse(localStorage.getItem('cart')) || [];
+    const cartContainer = document.getElementById('cart-container');
+    cartContainer.innerHTML = '';
+
+    let total = 0;
+    cart.forEach(item => {
+        const itemTotal = item.price * item.quantity;
+        total += itemTotal;
+
+        const cartItem = `
+            <div class="row border-bottom py-2">
+                <div class="col-md-8">
+                    <h5>${item.name} (x${item.quantity})</h5>
+                    <p>Price: $${item.price.toFixed(2)}</p>
+                </div>
+                <div class="col-md-4 text-right">
+                    <h5>Total: $${itemTotal.toFixed(2)}</h5>
+                    <button class="btn btn-danger" onclick="removeFromCart('${item.id}')">Remove</button>
+                </div>
+            </div>
+        `;
+        cartContainer.innerHTML += cartItem;
+    });
+
+    document.getElementById('total-price').innerText = `Total Price: $${total.toFixed(2)}`;
+}
+
+function removeFromCart(itemId) {
+    const cart = JSON.parse(localStorage.getItem('cart')) || [];
+    const updatedCart = cart.filter(item => String(item.id) !== String(itemId));
+    localStorage.setItem('cart', JSON.stringify(updatedCart));
+    loadCart();
+}
+
+document.getElementById('payment-form').addEventListener('submit', function(event) {
+    event.preventDefault();
+    
+    const method = document.getElementById('payment-method').value;
+    const cart = JSON.parse(localStorage.getItem('cart')) || [];
+    
+    // First build the complete order details object
+    const orderDetails = {
+        items: cart,
+        paymentMethod: method,
+        recipientName: document.getElementById('recipient-name').value,
+        address: method === 'cod' ? document.getElementById('address-cod').value : document.getElementById('address-credit').value,
+        phoneNumber: method === 'cod' ? document.getElementById('number-cod').value : document.getElementById('credit-phone-number').value,
+        cardDetails: method === 'credit-card' ? {
+            cardNumber: document.getElementById('card-number').value,
+            expiryDate: document.getElementById('expiry-date').value,
+            cvc: document.getElementById('cvc').value
+        } : {}
+    };
+    
+    console.log("Order details:", orderDetails);
+    
+    // Then use the properly built orderDetails object in your AJAX request
+    $.ajax({
+        url: 'https://justsportserver-6asn.onrender.com/order',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+            name: orderDetails.recipientName,
+            phone: orderDetails.phoneNumber,
+            location: orderDetails.address
+        }),
+        success: function(data) {
+            console.log("Success:", data);
+            localStorage.removeItem('cart');
+            loadCart();
+            alert('Checkout successful, thank you for ordering!');
+            $('#checkoutModal').modal('hide');
+        },
+        error: function(xhr, status, error) {
+            console.error("AJAX error:", status, error, xhr.responseText);
+            alert('Error during checkout: ' + error);
+        }
+    });
+});
+
+function togglePaymentFields() {
+    const method = document.getElementById('payment-method').value;
+    document.getElementById('cod-fields').style.display = method === 'cod' ? 'block' : 'none';
+    document.getElementById('credit-card-fields').style.display = method === 'credit-card' ? 'block' : 'none';
+}
+
+document.addEventListener('DOMContentLoaded', loadCart);
+    </script>
+</body>
+</html>
